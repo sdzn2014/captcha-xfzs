@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>请输入验证码</title>
+    <link rel="stylesheet" href="captcha.css">
+</head>
+<body>
+    <div class="captcha-container">
+        <h1>请输入验证码</h1>
+        <div class="input-section">
+            <div class="input-box">
+                <input type="text" class="captcha-input" placeholder="请输入验证码">
+            </div>
+            <div class="captcha-box">
+                <canvas id="captchaCanvas" width="120" height="40" style="border:1px solid #ddd;"></canvas>
+                <a href="#" class="refresh-link" onclick="generateCaptcha(); return false;">看不清换一张</a>
+            </div>
+        </div>
+        <button onclick="validateCaptcha()" class="submit-btn">确 定</button>
+        <div class="error-message">
+            验证码输入错误！
+        </div>
+    </div>
+
+    <div id="result-image" style="display: none;">
+        <img src="sbh.png" alt="结果图片" style="max-width: 100%;" onerror="handleImageError(this)">
+    </div>
+
+    <script>
+        let currentCaptcha = '';
+        
+        // 生成随机字母
+        function generateRandomLetter() {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            return letters.charAt(Math.floor(Math.random() * letters.length));
+        }
+
+        // 生成随机颜色
+        function getRandomColor() {
+            const colors = ['#4A90E2', '#50A14F', '#986801', '#A626A4', '#E45649'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        function generateCaptcha() {
+            const canvas = document.getElementById('captchaCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 清空画布
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 生成4个随机字母
+            currentCaptcha = '';
+            for(let i = 0; i < 4; i++) {
+                currentCaptcha += generateRandomLetter();
+            }
+            
+            // 设置文字基本样式
+            ctx.textBaseline = 'middle';
+            
+            // 绘制每个字母（使用不同的样式）
+            for(let i = 0; i < 4; i++) {
+                const x = 25 + i * 25; // 字母间隔
+                const y = 20 + (Math.random() * 6 - 3); // 轻微的垂直偏移
+                const rotate = (Math.random() * 30 - 15) * Math.PI / 180; // 随机旋转 -15 到 15 度
+                
+                ctx.save(); // 保存当前状态
+                ctx.translate(x, y);
+                ctx.rotate(rotate);
+                
+                // 随机字体大小
+                const fontSize = Math.floor(20 + Math.random() * 8);
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.fillStyle = getRandomColor();
+                
+                ctx.fillText(currentCaptcha[i], 0, 0);
+                ctx.restore(); // 恢复到之前的状态
+            }
+            
+            // 添加干扰线
+            for(let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                ctx.strokeStyle = getRandomColor();
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+            
+            // 添加干扰点
+            for(let i = 0; i < 30; i++) {
+                ctx.fillStyle = getRandomColor();
+                ctx.beginPath();
+                ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function validateCaptcha() {
+            const input = document.querySelector('.captcha-input');
+            const errorMessage = document.querySelector('.error-message');
+            const resultImage = document.getElementById('result-image');
+            const captchaContainer = document.querySelector('.captcha-container');
+
+            // 验证码不区分大小写
+            if (input.value.toUpperCase() === currentCaptcha) {
+                errorMessage.style.display = 'none';
+                captchaContainer.style.display = 'none';
+                resultImage.style.display = 'block';
+            } else {
+                errorMessage.style.display = 'block';
+                input.value = '';
+                generateCaptcha(); // 验证失败时刷新验证码
+            }
+        }
+
+        // 添加回车键支持
+        document.querySelector('.captcha-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                validateCaptcha();
+            }
+        });
+
+        // 页面加载时生成验证码
+        window.onload = generateCaptcha;
+    </script>
+</body>
+</html> 
